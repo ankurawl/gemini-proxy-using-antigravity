@@ -150,10 +150,12 @@ async def fetch_available_models(force_refresh: bool = False) -> List[Dict[str, 
         # If discovery failed, fall back to sensible defaults
         if not models_found:
             default_ids = [
-                ("gemini-3.7-flash-medium", "Gemini 3.7 Flash (Medium)"),
                 ("gemini-3.7-flash-high", "Gemini 3.7 Flash (High)"),
+                ("gemini-3.7-flash-medium", "Gemini 3.7 Flash (Medium)"),
                 ("gemini-3.7-flash-low", "Gemini 3.7 Flash (Low)"),
+                ("gemini-3.6-flash-high", "Gemini 3.6 Flash (High)"),
                 ("gemini-3.6-flash-medium", "Gemini 3.6 Flash (Medium)"),
+                ("gemini-3.5-flash-high", "Gemini 3.5 Flash (High)"),
                 ("gemini-3.5-flash-medium", "Gemini 3.5 Flash (Medium)"),
                 ("gemini-3.1-pro-high", "Gemini 3.1 Pro (High)"),
                 ("claude-sonnet-4-6", "Claude Sonnet 4.6 (Thinking)"),
@@ -178,16 +180,16 @@ async def fetch_available_models(force_refresh: bool = False) -> List[Dict[str, 
         return _cached_models
 
 
-def find_latest_flash_medium_model(models: List[Dict[str, Any]]) -> str:
+def find_latest_flash_high_model(models: List[Dict[str, Any]]) -> str:
     """
-    Identifies the latest Gemini Flash model with Medium reasoning level
+    Identifies the latest Gemini Flash model with High reasoning level
     by parsing version numbers in descending order (e.g. 3.8 > 3.7 > 3.6).
     """
     candidates: List[Tuple[Tuple[int, ...], str]] = []
 
     for m in models:
         model_id = m.get("id", "").lower()
-        match = re.match(r"^gemini-([\d\.]+)-flash-medium$", model_id)
+        match = re.match(r"^gemini-([\d\.]+)-flash-high$", model_id)
         if match:
             version_str = match.group(1)
             try:
@@ -201,36 +203,36 @@ def find_latest_flash_medium_model(models: List[Dict[str, Any]]) -> str:
         return candidates[0][1]
 
     # Fallback default
-    return "gemini-3.7-flash-medium"
+    return "gemini-3.7-flash-high"
 
 
 def resolve_model_id(requested_model: Optional[str], available_models: List[Dict[str, Any]]) -> str:
     """
     Resolves the target model ID.
-    Defaults to the latest Gemini Flash Medium model if unspecified, 'latest',
+    Defaults to the latest Gemini Flash High model if unspecified, 'latest',
     or generic fallback names. If a specific recognized model is given, uses it.
     """
-    latest_flash_medium = find_latest_flash_medium_model(available_models)
+    latest_flash_high = find_latest_flash_high_model(available_models)
 
     if not requested_model:
-        return latest_flash_medium
+        return latest_flash_high
 
     norm = requested_model.strip().lower()
 
-    # Aliases that map directly to the latest flash medium
+    # Aliases that map directly to the latest flash high
     generic_aliases = {
         "latest",
         "latest-flash",
-        "latest-flash-medium",
+        "latest-flash-high",
         "gemini-flash",
         "gemini-latest",
-        "gemini-flash-medium",
+        "gemini-flash-high",
         "default",
         "auto",
     }
 
     if norm in generic_aliases:
-        return latest_flash_medium
+        return latest_flash_high
 
     # Check if the requested model exists in available models
     known_models = {m["id"].lower(): m["id"] for m in available_models}
@@ -238,9 +240,9 @@ def resolve_model_id(requested_model: Optional[str], available_models: List[Dict
         return known_models[norm]
 
     # If the caller requested an unknown or client default model (e.g. gpt-4, gpt-4o, hermes),
-    # default gracefully to the latest Gemini Flash Medium
-    logger.info(f"Requested model '{requested_model}' not directly known; defaulting to '{latest_flash_medium}'")
-    return latest_flash_medium
+    # default gracefully to the latest Gemini Flash High
+    logger.info(f"Requested model '{requested_model}' not directly known; defaulting to '{latest_flash_high}'")
+    return latest_flash_high
 
 
 # Pydantic Request Models
@@ -291,10 +293,12 @@ async def health_check():
 
 
 @app.get("/v1/models")
+@app.get("/models")
+@app.get("/v1/v1/models")
 async def list_models():
     """List supported models in OpenAI format including dynamic discovery and virtual aliases."""
     available = await fetch_available_models()
-    latest_flash_medium = find_latest_flash_medium_model(available)
+    latest_flash_high = find_latest_flash_high_model(available)
     current_time = int(time.time())
 
     # Virtual aliases at the top for convenience
@@ -304,14 +308,21 @@ async def list_models():
             "object": "model",
             "created": current_time,
             "owned_by": "google",
-            "description": f"Dynamic alias pointing to {latest_flash_medium}",
+            "description": f"Dynamic alias pointing to {latest_flash_high}",
         },
         {
-            "id": "gemini-flash-medium",
+            "id": "gemini-flash",
             "object": "model",
             "created": current_time,
             "owned_by": "google",
-            "description": f"Dynamic alias pointing to {latest_flash_medium}",
+            "description": f"Dynamic alias pointing to {latest_flash_high}",
+        },
+        {
+            "id": "gemini-flash-high",
+            "object": "model",
+            "created": current_time,
+            "owned_by": "google",
+            "description": f"Dynamic alias pointing to {latest_flash_high}",
         },
     ]
 
@@ -337,8 +348,8 @@ async def run_agy_command(prompt: str, model: str) -> tuple[str, dict]:
 
     cmd = [
         agy_bin,
-        "-p",
-        prompt,
+        "--input-format",
+        "text",
         "--disable-slash-commands",
         "--output-format",
         "json",
@@ -351,10 +362,14 @@ async def run_agy_command(prompt: str, model: str) -> tuple[str, dict]:
     try:
         proc = await asyncio.create_subprocess_exec(
             *cmd,
+            stdin=asyncio.subprocess.PIPE,
             stdout=asyncio.subprocess.PIPE,
             stderr=asyncio.subprocess.PIPE,
         )
-        stdout_bytes, stderr_bytes = await asyncio.wait_for(proc.communicate(), timeout=300.0)
+        stdout_bytes, stderr_bytes = await asyncio.wait_for(
+            proc.communicate(input=prompt.encode("utf-8")),
+            timeout=600.0,
+        )
     except FileNotFoundError:
         logger.error(f"Antigravity CLI binary not found at '{agy_bin}'")
         raise HTTPException(
@@ -399,10 +414,12 @@ async def run_agy_command(prompt: str, model: str) -> tuple[str, dict]:
 
 
 @app.post("/v1/chat/completions")
+@app.post("/chat/completions")
+@app.post("/v1/v1/chat/completions")
 async def chat_completions(req: ChatCompletionRequest):
     """
     OpenAI-compatible chat completion endpoint.
-    Flattens messages, resolves model to latest Flash Medium by default, executes agy, and returns standard JSON.
+    Flattens messages, resolves model to latest Flash High by default, executes agy, and returns standard JSON.
     """
     if not req.messages:
         raise HTTPException(

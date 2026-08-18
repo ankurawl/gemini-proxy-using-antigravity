@@ -5,6 +5,7 @@ services:
     ports:
       - "8000:8000"
     volumes:
+      - ./proxy.py:/app/proxy.py:ro
       - ~/.gemini/antigravity-cli/:/root/.gemini/antigravity-cli/:ro
     tmpfs:
       - /root/.gemini/antigravity-cli/cache:rw,exec
