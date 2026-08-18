@@ -1,4 +1,4 @@
-# 🛰️ Hermes Antigravity Proxy
+# 🛰️ Gemini Proxy (using Antigravity)
 
 An OpenAI-compatible **FastAPI** proxy running in **Docker** that exposes Google Antigravity LLMs via the `agy` CLI as a local/LAN REST API. 
 
@@ -23,12 +23,12 @@ Seamlessly connect external autonomous agents (like [Hermes](https://github.com/
 ```mermaid
 flowchart LR
     subgraph Clients["Local & LAN Clients"]
-        H[Hermes Agent]
+        H[Hermes Agent / Autonomous Agents]
         W[Open WebUI / Chatbot]
         C[cURL / Python OpenAI SDK]
     end
 
-    subgraph DockerContainer["Docker: hermes-proxy (Port 8000)"]
+    subgraph DockerContainer["Docker: gemini-proxy-using-antigravity (Port 8000)"]
         F["FastAPI Proxy (proxy.py)"]
         CLI["Antigravity CLI (agy)"]
         F -->|Subprocess Exec| CLI
@@ -71,8 +71,8 @@ Before starting the proxy, ensure the host machine has:
 ### 1. Clone & Start Container
 
 ```bash
-git clone https://github.com/ankurawl/hermes-proxy.git
-cd hermes-proxy
+git clone https://github.com/ankurawl/gemini-proxy-using-antigravity.git
+cd gemini-proxy-using-antigravity
 docker compose up -d --build
 ```
 
@@ -80,7 +80,7 @@ docker compose up -d --build
 
 ```bash
 curl http://localhost:8000/health
-# Response: {"status":"ok","service":"hermes-proxy"}
+# Response: {"status":"ok","service":"gemini-proxy-using-antigravity"}
 ```
 
 ### 3. List Available Models & Aliases
@@ -122,9 +122,9 @@ curl -X POST http://localhost:8000/v1/chat/completions \
 ## 💻 Client Integration Examples
 
 ### 1. Hermes Agent (or any remote agent on LAN / Tailscale)
-Configure Hermes to connect to your proxy host:
+Configure your agent to connect to the proxy host:
 - **Base URL**: `http://<PROXY_HOST_IP_OR_TAILSCALE_IP>:8000/v1` (or `http://localhost:8000/v1` if local)
-- **API Key**: Any dummy string (e.g. `sk-hermes-proxy`)
+- **API Key**: Any dummy string (e.g. `sk-gemini-proxy`)
 - **Model**: `latest` (or `gemini-3.7-flash-high`, `gemini-3.1-pro-high`, `claude-sonnet-4-6`)
 
 ### 2. Official OpenAI Python SDK
@@ -133,7 +133,7 @@ from openai import OpenAI
 
 client = OpenAI(
     base_url="http://localhost:8000/v1",
-    api_key="sk-hermes-proxy",  # Dummy key required by SDK
+    api_key="sk-gemini-proxy",  # Dummy key required by SDK
 )
 
 response = client.chat.completions.create(
@@ -148,8 +148,8 @@ print(response.choices[0].message.content)
 ```
 
 ### 3. Open WebUI / LibreChat / Third-Party UIs
-- **API Base URL**: `http://localhost:8000/v1` (or host LAN IP)
-- **API Key**: `sk-hermes-proxy`
+- **API Base URL**: `http://localhost:8000/v1` (or host LAN / Tailscale IP)
+- **API Key**: `sk-gemini-proxy`
 - **Models**: Select `latest`, `gemini-flash-high`, or let the UI fetch dynamically from `GET /v1/models`.
 
 ---
@@ -179,7 +179,7 @@ You can optionally configure the proxy via environment variables in `docker-comp
 
 ### View Container Logs
 ```bash
-docker compose logs -f hermes-proxy
+docker compose logs -f gemini-proxy
 ```
 
 ### Updating Models & Dependencies
