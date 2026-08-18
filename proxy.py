@@ -19,7 +19,7 @@ logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
 )
-logger = logging.getLogger("hermes-proxy")
+logger = logging.getLogger("gemini-proxy-using-antigravity")
 
 # Regex to strip ANSI escape codes
 ANSI_ESCAPE_REGEX = re.compile(r"\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])")
@@ -269,7 +269,7 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(
-    title="Hermes Antigravity Proxy",
+    title="Gemini Proxy Using Antigravity",
     description="OpenAI-compatible FastAPI proxy to Google LLMs via Antigravity CLI",
     version="1.1.0",
     lifespan=lifespan,
@@ -289,7 +289,7 @@ app.add_middleware(
 @app.get("/health")
 async def health_check():
     """Health check endpoint."""
-    return {"status": "ok", "service": "hermes-proxy"}
+    return {"status": "ok", "service": "gemini-proxy-using-antigravity"}
 
 
 @app.get("/v1/models")

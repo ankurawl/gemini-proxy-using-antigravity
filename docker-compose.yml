@@ -1,7 +1,7 @@
 services:
-  hermes-proxy:
+  gemini-proxy:
     build: .
-    container_name: hermes-proxy
+    container_name: gemini-proxy-using-antigravity
     ports:
       - "8000:8000"
     volumes:
