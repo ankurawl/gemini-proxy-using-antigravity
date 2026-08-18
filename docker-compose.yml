@@ -1,0 +1,16 @@
+services:
+  hermes-proxy:
+    build: .
+    container_name: hermes-proxy
+    ports:
+      - "8000:8000"
+    volumes:
+      - ~/.gemini/antigravity-cli/:/root/.gemini/antigravity-cli/:ro
+    tmpfs:
+      - /root/.gemini/antigravity-cli/cache:rw,exec
+      - /root/.gemini/antigravity-cli/log:rw
+      - /root/.gemini/antigravity-cli/conversations:rw
+      - /root/.gemini/antigravity-cli/presence:rw
+      - /root/.gemini/antigravity-cli/crashes:rw
+      - /root/.gemini/antigravity-cli/scratch:rw
+    restart: unless-stopped
