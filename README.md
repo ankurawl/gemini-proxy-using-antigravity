@@ -121,9 +121,9 @@ curl -X POST http://localhost:8000/v1/chat/completions \
 
 ## 💻 Client Integration Examples
 
-### 1. Hermes Agent (or any remote agent on LAN)
+### 1. Hermes Agent (or any remote agent on LAN / Tailscale)
 Configure Hermes to connect to your proxy host:
-- **Base URL**: `http://<PROXY_HOST_LAN_IP>:8000/v1`
+- **Base URL**: `http://<PROXY_HOST_IP_OR_TAILSCALE_IP>:8000/v1` (or `http://localhost:8000/v1` if local)
 - **API Key**: Any dummy string (e.g. `sk-hermes-proxy`)
 - **Model**: `latest` (or `gemini-3.7-flash-high`, `gemini-3.1-pro-high`, `claude-sonnet-4-6`)
 
@@ -156,11 +156,11 @@ print(response.choices[0].message.content)
 
 ## 📂 Repository Structure
 
-- [`proxy.py`](file:///home/agag/Documents/hermes-proxy/proxy.py): Core FastAPI proxy service handling OpenAI schemas, dynamic model discovery, subprocess invocation, message flattening, and streaming.
-- [`docker-compose.yml`](file:///home/agag/Documents/hermes-proxy/docker-compose.yml): Production Docker Compose file with host volume bind mounts and secure `tmpfs` overlays.
-- [`Dockerfile`](file:///home/agag/Documents/hermes-proxy/Dockerfile): Minimal `python:3.11-slim` container installing `agy` CLI and Python dependencies.
-- [`requirements.txt`](file:///home/agag/Documents/hermes-proxy/requirements.txt): Pinned dependencies (`fastapi`, `uvicorn`, `pydantic`).
-- [`.gitignore`](file:///home/agag/Documents/hermes-proxy/.gitignore) & [`.dockerignore`](file:///home/agag/Documents/hermes-proxy/.dockerignore): Clean repository hygiene preventing local artifacts or credential leakage.
+- [`proxy.py`](./proxy.py): Core FastAPI proxy service handling OpenAI schemas, dynamic model discovery, subprocess invocation, message flattening, and streaming.
+- [`docker-compose.yml`](./docker-compose.yml): Production Docker Compose file with host volume bind mounts and secure `tmpfs` overlays.
+- [`Dockerfile`](./Dockerfile): Minimal `python:3.11-slim` container installing `agy` CLI and Python dependencies.
+- [`requirements.txt`](./requirements.txt): Pinned dependencies (`fastapi`, `uvicorn`, `pydantic`).
+- [`.gitignore`](./.gitignore) & [`.dockerignore`](./.dockerignore): Clean repository hygiene preventing local artifacts or credential leakage.
 
 ---
 
