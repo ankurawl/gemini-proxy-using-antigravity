@@ -351,6 +351,7 @@ async def run_agy_command(prompt: str, model: str) -> tuple[str, dict]:
         "--input-format",
         "text",
         "--disable-slash-commands",
+        "--dangerously-skip-permissions",
         "--output-format",
         "json",
         "--model",
